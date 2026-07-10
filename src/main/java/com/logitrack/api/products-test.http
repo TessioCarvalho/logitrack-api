@@ -1,0 +1,27 @@
+### Cadastrar um novo Produto (Sucesso)
+POST http://localhost:8080/products
+Content-Type: application/json
+
+{
+  "name": "Pneu Pirelli Chrono 2",
+  "sku": "PNU-PIR-CH2-195",
+  "weight": 11.4,
+  "quantityInStock": 50,
+  "minimumStock": 10
+}
+
+### Listar todos os produtos do Armazém
+GET http://localhost:8080/products
+Accept: application/json
+
+### Testar Validação de Erro (Peso negativo e sem nome)
+POST http://localhost:8080/products
+Content-Type: application/json
+
+{
+  "name": "",
+  "sku": "PNU-FALHO-001",
+  "weight": -5.0,
+  "quantityInStock": 10,
+  "minimumStock": 5
+}
