@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: logitrack-postgres
+    environment:
+      POSTGRES_USER: logitrack_user
+      POSTGRES_PASSWORD: logitrack_password
+      POSTGRES_DB: logitrack_wms_tms
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
