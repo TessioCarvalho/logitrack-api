@@ -3,8 +3,8 @@ POST http://localhost:8080/products
 Content-Type: application/json
 
 {
-  "name": "Pneu Pirelli Chrono 2",
-  "sku": "PNU-PIR-CH2-195",
+  "name": "Pneu Wanli 195/65 R14",
+  "sku": "PNU-PIR-CH2-197",
   "weight": 11.4,
   "quantityInStock": 50,
   "minimumStock": 10
