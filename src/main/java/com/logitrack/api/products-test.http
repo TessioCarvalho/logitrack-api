@@ -3,9 +3,9 @@ POST http://localhost:8080/products
 Content-Type: application/json
 
 {
-  "name": "Pneu Wanli 195/65 R13",
-  "sku": "PNU-PIR-CH2-198",
-  "weight": -11.4,
+  "name": "Pneu Aptany 195/65 R13",
+  "sku": "PNU-PIR-CH2-189",
+  "weight": 11.4,
   "quantityInStock": 50,
   "minimumStock": 10
 }
