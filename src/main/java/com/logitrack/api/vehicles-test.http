@@ -1,0 +1,22 @@
+### Cadastrar Veículo com Sucesso
+POST http://localhost:8080/vehicles
+Content-Type: application/json
+
+{
+  "plate": "ABC-1234",
+  "model": "Scania R 450",
+  "maxCapacityKg": 24000.0
+}
+
+### Testar Validação (Placa/Modelo vazios e capacidade negativa)
+POST http://localhost:8080/vehicles
+Content-Type: application/json
+
+{
+  "plate": "",
+  "model": "",
+  "maxCapacityKg": -500.0
+}
+
+### Listar Frota Paginada
+GET http://localhost:8080/vehicles?size=5
