@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Positive;
 
 @Entity
 @Table(name = "products")
@@ -34,17 +35,24 @@ public class Product {
     @Column(name = "minimum_stock")
     private Integer minimumStock;
 
-    // --- CONSTRUTORES (Padrão e Completo) ---
+    // Novo campo técnico de cubagem para a distribuidora de pneus
+    @NotNull(message = "O volume cúbico é obrigatório.")
+    @Positive(message = "O volume cúbico deve ser maior que zero.")
+    @Column(name = "cubic_volume")
+    private Double cubicVolume; // volume em m³
+
+    // --- CONSTRUTORES ---
     public Product() {
     }
 
-    public Product(Long id, String name, String sku, Double weight, Integer quantityInStock, Integer minimumStock) {
+    public Product(Long id, String name, String sku, Double weight, Integer quantityInStock, Integer minimumStock, Double cubicVolume) {
         this.id = id;
         this.name = name;
         this.sku = sku;
         this.weight = weight;
         this.quantityInStock = quantityInStock;
         this.minimumStock = minimumStock;
+        this.cubicVolume = cubicVolume;
     }
 
     // --- GETTERS E SETTERS ---
@@ -65,4 +73,7 @@ public class Product {
 
     public Integer getMinimumStock() { return minimumStock; }
     public void setMinimumStock(Integer minimumStock) { this.minimumStock = minimumStock; }
+
+    public Double getCubicVolume() { return cubicVolume; }
+    public void setCubicVolume(Double cubicVolume) { this.cubicVolume = cubicVolume; }
 }

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "vehicles")
@@ -24,15 +23,23 @@ public class Vehicle {
     @NotNull(message = "A capacidade máxima de carga é obrigatória")
     @Positive(message = "A capacidade de carga deve ser um valor maior que zero")
     @Column(name = "max_capacity_kg")
-    private BigDecimal maxCapacityKg;
+    private Double maxCapacityKg;
+
+    // Novo campo técnico de capacidade de volumétrica para o baú do veículo
+    @NotNull(message = "A capacidade volumétrica máxima é obrigatória")
+    @Positive(message = "A capacidade volumétrica máxima deve ser maior que zero")
+    @Column(name = "max_cubic_volume")
+    private Double maxCubicVolume; // capacidade total em m³
 
     // Construtor padrão exigido pelo Hibernate
     public Vehicle() {}
 
-    public Vehicle(String plate, String model, BigDecimal maxCapacityKg) {
+    public Vehicle(Long id, String plate, String model, Double maxCapacityKg, Double maxCubicVolume) {
+        this.id = id;
         this.plate = plate;
         this.model = model;
         this.maxCapacityKg = maxCapacityKg;
+        this.maxCubicVolume = maxCubicVolume;
     }
 
     // Getters e Setters
@@ -45,6 +52,9 @@ public class Vehicle {
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
 
-    public BigDecimal getMaxCapacityKg() { return maxCapacityKg; }
-    public void setMaxCapacityKg(BigDecimal maxCapacityKg) { this.maxCapacityKg = maxCapacityKg; }
+    public Double getMaxCapacityKg() { return maxCapacityKg; }
+    public void setMaxCapacityKg(Double maxCapacityKg) { this.maxCapacityKg = maxCapacityKg; }
+
+    public Double getMaxCubicVolume() { return maxCubicVolume; }
+    public void setMaxCubicVolume(Double maxCubicVolume) { this.maxCubicVolume = maxCubicVolume; }
 }
