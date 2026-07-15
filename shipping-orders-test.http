@@ -32,3 +32,18 @@ Content-Type: application/json
     }
   ]
 }
+
+### Cenário 3: Testar Validação de Estoque Insuficiente (Estoque Esgotado)
+POST http://localhost:8080/shipping-orders
+Content-Type: application/json
+
+{
+  "vehicleId": 2,
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 250,
+      "customerName": "Atacadão de Pneus Auto"
+    }
+  ]
+}
