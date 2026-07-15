@@ -1,5 +1,6 @@
 package com.logitrack.api.domain.product;
 
+import com.logitrack.api.exception.BusinessException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -53,6 +54,27 @@ public class Product {
         this.quantityInStock = quantityInStock;
         this.minimumStock = minimumStock;
         this.cubicVolume = cubicVolume;
+    }
+
+    // --- REGRAS DE NEGÓCIO DE DOMÍNIO (Rich Domain Model) ---
+
+    /**
+     * Decrementa a quantidade em estoque defendendo as regras de integridade do produto.
+     * Evita que o estoque fique negativo e valida os parâmetros de entrada.
+     */
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException(
+                    "A quantidade para baixa de estoque deve ser maior que zero."
+            );
+        }
+        if (this.quantityInStock < quantity) {
+            throw new BusinessException(
+                    String.format("Estoque insuficiente para o produto '%s'. Disponível: %d | Solicitado: %d",
+                            this.name, this.quantityInStock, quantity)
+            );
+        }
+        this.quantityInStock -= quantity;
     }
 
     // --- GETTERS E SETTERS ---
