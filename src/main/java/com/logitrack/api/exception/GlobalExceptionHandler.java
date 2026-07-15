@@ -14,7 +14,24 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Captura erros de validação (@Valid)
+    // 1. Captura erros de regras de negócio (Peso, cubagem estourada, etc.)
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiError> handleBusinessException(
+            BusinessException ex, HttpServletRequest request) {
+
+        ApiError apiError = new ApiError(
+                LocalDateTime.now(), // Corrigido: passando LocalDateTime puro
+                HttpStatus.BAD_REQUEST.value(),
+                "Business Rule Violation", // Deixa claro que o erro foi uma quebra de regra operacional
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
+    // 2. Captura erros de validação de payload (@Valid nos DTOs)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -40,7 +57,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
     }
 
-    // Captura qualquer outro erro inesperado (Evita estourar 500 feio com código)
+    // 3. Captura qualquer outro erro inesperado (Fallback de infraestrutura)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAllUncaughtException(
             Exception ex, HttpServletRequest request) {
@@ -51,7 +68,8 @@ public class GlobalExceptionHandler {
                 "Internal Server Error",
                 ex.getMessage(),
                 request.getRequestURI(),
-                null);
+                null
+        );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
     }
