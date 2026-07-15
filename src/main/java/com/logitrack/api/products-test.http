@@ -1,20 +1,34 @@
-### Cadastrar um novo Produto (Sucesso)
+### Cenário 1: Cadastrar Produto 1 (Pneu Aptany Aro 13 - Menor)
 POST http://localhost:8080/products
 Content-Type: application/json
 
 {
-  "name": "Pneu Aptany 195/65 R13",
-  "sku": "PNU-PIR-CH2-189",
-  "weight": 11.4,
-  "quantityInStock": 50,
-  "minimumStock": 10
+  "name": "Pneu Aptany 195/65R13 RP203 89H",
+  "sku": "APT19565R13",
+  "weight": 6.8,
+  "quantityInStock": 200,
+  "minimumStock": 20,
+  "cubicVolume": 0.043
 }
 
-### Listar todos os produtos do Armazém
+### Cenário 2: Cadastrar Produto 2 (Pneu Wanli Aro 15 - Médio)
+POST http://localhost:8080/products
+Content-Type: application/json
+
+{
+  "name": "Pneu Wanli 185/60R15 SP026 88H",
+  "sku": "WAN18560R15",
+  "weight": 7.5,
+  "quantityInStock": 400,
+  "minimumStock": 50,
+  "cubicVolume": 0.072
+}
+
+### Cenário 3: Listar todos os produtos do Armazém
 GET http://localhost:8080/products
 Accept: application/json
 
-### Testar Validação de Erro (Peso negativo e sem nome)
+### Cenário 4: Testar Validação de Erro (Campos vazios, peso negativo e cubagem zerada)
 POST http://localhost:8080/products
 Content-Type: application/json
 
@@ -23,5 +37,6 @@ Content-Type: application/json
   "sku": "PNU-FALHO-001",
   "weight": -5.0,
   "quantityInStock": 10,
-  "minimumStock": 5
+  "minimumStock": 5,
+  "cubicVolume": 0.0
 }

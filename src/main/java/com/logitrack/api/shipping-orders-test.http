@@ -1,0 +1,34 @@
+### Cenário 1: Criar Ordem com Sucesso (Carga Otimizada)
+POST http://localhost:8080/shipping-orders
+Content-Type: application/json
+
+{
+  "vehicleId": 1,
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 10,
+      "customerName": "Importadora Pneus Brasil Ltda"
+    },
+    {
+      "productId": 2,
+      "quantity": 5,
+      "customerName": "Borracharia São José"
+    }
+  ]
+}
+
+### Cenário 2: Estourar Limite de Cubagem/Peso (Carga Abusiva)
+POST http://localhost:8080/shipping-orders
+Content-Type: application/json
+
+{
+  "vehicleId": 1,
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 5000,
+      "customerName": "Distribuidora de Pneus Gigante"
+    }
+  ]
+}

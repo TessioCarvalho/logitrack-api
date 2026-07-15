@@ -1,22 +1,35 @@
-### Cadastrar Veículo com Sucesso
+### Cenário 1: Cadastrar Veículo com Sucesso (Caminhão Toco 28m³)
 POST http://localhost:8080/vehicles
 Content-Type: application/json
 
 {
-  "plate": "ABC-1234",
-  "model": "Scania R 450",
-  "maxCapacityKg": 24000.0
+  "plate": "ABC1D23",
+  "model": "Mercedes-Benz Atego 1419 (Toco)",
+  "maxCapacityKg": 6000.0,
+  "maxCubicVolume": 28.0
 }
 
-### Testar Validação (Placa/Modelo vazios e capacidade negativa)
+### Cenário 2: Cadastrar Veículo com Sucesso (Carreta Scania 100m³)
+POST http://localhost:8080/vehicles
+Content-Type: application/json
+
+{
+  "plate": "SCA4R50",
+  "model": "Scania R 450 (Carreta)",
+  "maxCapacityKg": 24000.0,
+  "maxCubicVolume": 100.0
+}
+
+### Cenário 3: Testar Validação (Campos vazios, peso negativo e cubagem zerada)
 POST http://localhost:8080/vehicles
 Content-Type: application/json
 
 {
   "plate": "",
   "model": "",
-  "maxCapacityKg": -500.0
+  "maxCapacityKg": -500.0,
+  "maxCubicVolume": 0.0
 }
 
-### Listar Frota Paginada
+### Cenário 4: Listar Frota Paginada
 GET http://localhost:8080/vehicles?size=5
