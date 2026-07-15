@@ -1,7 +1,5 @@
-package com.logitrack.api.controller;
+package com.logitrack.api.domain.product;
 
-import com.logitrack.api.domain.product.Product;
-import com.logitrack.api.service.ProductService; // Ajuste o pacote se o seu service estiver em outro caminho
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

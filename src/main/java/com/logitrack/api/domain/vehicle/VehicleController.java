@@ -1,7 +1,5 @@
-package com.logitrack.api.controller;
+package com.logitrack.api.domain.vehicle;
 
-import com.logitrack.api.domain.vehicle.Vehicle;
-import com.logitrack.api.service.VehicleService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

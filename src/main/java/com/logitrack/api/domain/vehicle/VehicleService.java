@@ -1,7 +1,5 @@
-package com.logitrack.api.service;
+package com.logitrack.api.domain.vehicle;
 
-import com.logitrack.api.domain.vehicle.Vehicle;
-import com.logitrack.api.domain.vehicle.VehicleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

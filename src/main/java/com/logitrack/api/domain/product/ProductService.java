@@ -1,7 +1,5 @@
-package com.logitrack.api.service;
+package com.logitrack.api.domain.product;
 
-import com.logitrack.api.domain.product.Product;
-import com.logitrack.api.domain.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
