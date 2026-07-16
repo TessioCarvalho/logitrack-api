@@ -1,15 +1,21 @@
 package com.logitrack.api.domain.product;
 
+import com.logitrack.api.domain.product.event.LowStockEvent;
 import com.logitrack.api.exception.BusinessException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.AbstractAggregateRoot;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 @Entity
 @Table(name = "products")
-public class Product {
+public class Product extends AbstractAggregateRoot<Product> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +42,6 @@ public class Product {
     @Column(name = "minimum_stock")
     private Integer minimumStock;
 
-    // Novo campo técnico de cubagem para a distribuidora de pneus
     @NotNull(message = "O volume cúbico é obrigatório.")
     @Positive(message = "O volume cúbico deve ser maior que zero.")
     @Column(name = "cubic_volume")
@@ -60,7 +65,7 @@ public class Product {
 
     /**
      * Decrementa a quantidade em estoque defendendo as regras de integridade do produto.
-     * Evita que o estoque fique negativo e valida os parâmetros de entrada.
+     * Evita que o estoque fique negativo e registra um evento se atingir o estoque mínimo.
      */
     public void decreaseStock(int quantity) {
         if (quantity <= 0) {
@@ -74,7 +79,30 @@ public class Product {
                             this.name, this.quantityInStock, quantity)
             );
         }
+
         this.quantityInStock -= quantity;
+
+        // Regra de Negócio: Se o estoque cair abaixo do mínimo configurado, registra o evento
+        if (this.quantityInStock < this.minimumStock) {
+            registerEvent(new LowStockEvent(
+                    this.id,
+                    this.sku,
+                    this.name,
+                    this.quantityInStock,
+                    this.minimumStock
+            ));
+        }
+    }
+
+    // --- MÉTODOS DE SUPORTE PARA TESTES (Acesso Seguro aos Eventos) ---
+
+    /**
+     * Retorna uma visão não-modificável dos eventos acumulados.
+     * Utilizado para asserções de testes sem violar o encapsulamento.
+     */
+    public Collection<Object> getAndClearDomainEvents() {
+        // domainEvents() retorna a lista interna; nós apenas a expomos com segurança
+        return Collections.unmodifiableCollection(this.domainEvents());
     }
 
     // --- GETTERS E SETTERS ---

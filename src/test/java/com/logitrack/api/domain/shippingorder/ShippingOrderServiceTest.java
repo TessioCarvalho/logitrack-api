@@ -2,6 +2,7 @@ package com.logitrack.api.domain.shippingorder;
 
 import com.logitrack.api.domain.product.Product;
 import com.logitrack.api.domain.product.ProductRepository;
+import com.logitrack.api.domain.product.event.LowStockEvent;
 import com.logitrack.api.domain.shippingorder.dto.ShippingOrderItemRequest;
 import com.logitrack.api.domain.shippingorder.dto.ShippingOrderRequest;
 import com.logitrack.api.domain.vehicle.Vehicle;
@@ -10,6 +11,7 @@ import com.logitrack.api.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -105,5 +108,58 @@ class ShippingOrderServiceTest {
 
         assertTrue(exception.getMessage().contains("Capacidade volumétrica (cubagem) excedida"));
         verify(shippingOrderRepository, never()).save(any(ShippingOrder.class));
+    }
+
+    @Test
+    @DisplayName("Should register LowStockEvent when product stock falls below minimum after shipping order creation")
+    void shouldRegisterLowStockEventWhenStockFallsBelowMinimum() {
+        // Arrange
+        Vehicle vehicle = new Vehicle(1L, "Scania R 450", "ABC-1234", 15000.0, 80.0);
+
+        // Estoque Inicial = 10, Mínimo = 5. Pedindo 6 unidades, resta 4 (Gera Alerta).
+        Product tire = new Product(
+                1L,
+                "Pneu Trator Agrícola",
+                "PNEU-TRATOR-01",
+                150.0,
+                10,
+                5,
+                1.2
+        );
+
+        ShippingOrderItemRequest itemRequest = new ShippingOrderItemRequest(1L, 6, "Client A");
+        ShippingOrderRequest request = new ShippingOrderRequest(1L, List.of(itemRequest));
+
+        when(vehicleRepository.findById(1L)).thenReturn(Optional.of(vehicle));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(tire));
+
+        // Mock do save para retornar a própria entidade do parâmetro
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(shippingOrderRepository.save(any(ShippingOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        shippingOrderService.createShippingOrder(request);
+
+        // Assert
+        // 1. Validando o decréscimo correto na camada do Repositório
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+
+        Product savedProduct = productCaptor.getValue();
+        assertEquals(4, savedProduct.getQuantityInStock());
+
+        // 2. Extraindo o evento do Aggregate para garantir que foi acumulado para publicação
+        var domainEvents = savedProduct.getAndClearDomainEvents();
+
+        assertThat(domainEvents)
+                .hasSize(1)
+                .first()
+                .isInstanceOf(LowStockEvent.class);
+
+        LowStockEvent event = (LowStockEvent) domainEvents.iterator().next();
+        assertEquals(1L, event.productId());
+        assertEquals("PNEU-TRATOR-01", event.sku());
+        assertEquals(4, event.currentStock());
+        assertEquals(5, event.minimumStock());
     }
 }

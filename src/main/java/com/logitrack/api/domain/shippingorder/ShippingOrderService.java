@@ -42,8 +42,11 @@ public class ShippingOrderService {
             Product product = productRepository.findById(itemDto.productId())
                     .orElseThrow(() -> new BusinessException("Produto não encontrado com o ID: " + itemDto.productId()));
 
-            // 🔥 Executa a regra de negócio rica dentro da entidade Product (Baixa e validação de estoque)
+            // Executa a regra de negócio rica dentro da entidade Product (Baixa e validação de estoque)
             product.decreaseStock(itemDto.quantity());
+
+            // 🔥 Persiste o produto atualizado para que o Spring Data dispare os eventos de domínio acumulados
+            productRepository.save(product);
 
             double itemWeight = product.getWeight() * itemDto.quantity();
             double itemVolume = product.getCubicVolume() * itemDto.quantity();
