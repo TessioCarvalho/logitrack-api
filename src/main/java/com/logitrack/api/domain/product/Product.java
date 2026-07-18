@@ -47,6 +47,9 @@ public class Product extends AbstractAggregateRoot<Product> {
     @Column(name = "cubic_volume")
     private Double cubicVolume; // volume em m³
 
+    @Version
+    private Long version; // O JPA gerencia este campo automaticamente
+
     // --- CONSTRUTORES ---
     public Product() {
     }
@@ -126,4 +129,6 @@ public class Product extends AbstractAggregateRoot<Product> {
 
     public Double getCubicVolume() { return cubicVolume; }
     public void setCubicVolume(Double cubicVolume) { this.cubicVolume = cubicVolume; }
+
+    public Long getVersion() {return version;}
 }
