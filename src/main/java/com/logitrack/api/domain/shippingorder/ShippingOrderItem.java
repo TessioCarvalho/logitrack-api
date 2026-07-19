@@ -2,9 +2,9 @@ package com.logitrack.api.domain.shippingorder;
 
 import com.logitrack.api.domain.product.Product;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "shipping_order_items")
@@ -39,7 +39,19 @@ public class ShippingOrderItem {
         this.customerName = customerName;
     }
 
-    // Getters e Setters
+    // --- MÉTODOS DE DOMÍNIO RICO ---
+
+    public Double calculateTotalWeight() {
+        if (this.product == null) return 0.0;
+        return this.product.getWeight() * this.quantity;
+    }
+
+    public Double calculateTotalCubicVolume() {
+        if (this.product == null) return 0.0;
+        return this.product.getCubicVolume() * this.quantity;
+    }
+
+    // --- GETTERS E SETTERS ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
