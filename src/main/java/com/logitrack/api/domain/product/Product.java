@@ -5,13 +5,13 @@ import com.logitrack.api.exception.BusinessException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 @Entity
 @Table(name = "products")
@@ -48,20 +48,31 @@ public class Product extends AbstractAggregateRoot<Product> {
     private Double cubicVolume; // volume em m³
 
     @Version
-    private Long version; // O JPA gerencia este campo automaticamente
+    private Long version;
 
-    // --- CONSTRUTORES ---
-    public Product() {
+    // Construtor sem argumentos EXIGIDO pelo JPA/Hibernate
+    protected Product() {
     }
 
+    /**
+     * Construtor utilitário para Testes de Unidade.
+     * Gera um SKU aleatório e define o estoque mínimo padrão como 0.
+     */
+    public Product(String name, Double weight, Double cubicVolume, Integer quantityInStock) {
+        this(null, name, "SKU-" + UUID.randomUUID().toString().substring(0, 8), weight, quantityInStock, 0, cubicVolume);
+    }
+
+    /**
+     * Construtor Completo do Domínio com defensive defaults contra NullPointerException.
+     */
     public Product(Long id, String name, String sku, Double weight, Integer quantityInStock, Integer minimumStock, Double cubicVolume) {
         this.id = id;
         this.name = name;
         this.sku = sku;
-        this.weight = weight;
-        this.quantityInStock = quantityInStock;
-        this.minimumStock = minimumStock;
-        this.cubicVolume = cubicVolume;
+        this.weight = weight != null ? weight : 0.0;
+        this.quantityInStock = quantityInStock != null ? quantityInStock : 0;
+        this.minimumStock = minimumStock != null ? minimumStock : 0;
+        this.cubicVolume = cubicVolume != null ? cubicVolume : 0.0;
     }
 
     // --- REGRAS DE NEGÓCIO DE DOMÍNIO (Rich Domain Model) ---
@@ -76,35 +87,36 @@ public class Product extends AbstractAggregateRoot<Product> {
                     "A quantidade para baixa de estoque deve ser maior que zero."
             );
         }
-        if (this.quantityInStock < quantity) {
+
+        // Proteção extra garantindo que a variável não esteja nula por qualquer falha de estado
+        int currentStock = this.quantityInStock != null ? this.quantityInStock : 0;
+
+        if (currentStock < quantity) {
             throw new BusinessException(
                     String.format("Estoque insuficiente para o produto '%s'. Disponível: %d | Solicitado: %d",
-                            this.name, this.quantityInStock, quantity)
+                            this.name, currentStock, quantity)
             );
         }
 
-        this.quantityInStock -= quantity;
+        this.quantityInStock = currentStock - quantity;
+
+        int minStock = this.minimumStock != null ? this.minimumStock : 0;
 
         // Regra de Negócio: Se o estoque cair abaixo do mínimo configurado, registra o evento
-        if (this.quantityInStock < this.minimumStock) {
+        if (this.quantityInStock < minStock) {
             registerEvent(new LowStockEvent(
                     this.id,
                     this.sku,
                     this.name,
                     this.quantityInStock,
-                    this.minimumStock
+                    minStock
             ));
         }
     }
 
     // --- MÉTODOS DE SUPORTE PARA TESTES (Acesso Seguro aos Eventos) ---
 
-    /**
-     * Retorna uma visão não-modificável dos eventos acumulados.
-     * Utilizado para asserções de testes sem violar o encapsulamento.
-     */
     public Collection<Object> getAndClearDomainEvents() {
-        // domainEvents() retorna a lista interna; nós apenas a expomos com segurança
         return Collections.unmodifiableCollection(this.domainEvents());
     }
 
@@ -118,17 +130,17 @@ public class Product extends AbstractAggregateRoot<Product> {
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
 
-    public Double getWeight() { return weight; }
+    public Double getWeight() { return weight != null ? weight : 0.0; }
     public void setWeight(Double weight) { this.weight = weight; }
 
-    public Integer getQuantityInStock() { return quantityInStock; }
+    public Integer getQuantityInStock() { return quantityInStock != null ? quantityInStock : 0; }
     public void setQuantityInStock(Integer quantityInStock) { this.quantityInStock = quantityInStock; }
 
-    public Integer getMinimumStock() { return minimumStock; }
+    public Integer getMinimumStock() { return minimumStock != null ? minimumStock : 0; }
     public void setMinimumStock(Integer minimumStock) { this.minimumStock = minimumStock; }
 
-    public Double getCubicVolume() { return cubicVolume; }
+    public Double getCubicVolume() { return cubicVolume != null ? cubicVolume : 0.0; }
     public void setCubicVolume(Double cubicVolume) { this.cubicVolume = cubicVolume; }
 
-    public Long getVersion() {return version;}
+    public Long getVersion() { return version; }
 }
