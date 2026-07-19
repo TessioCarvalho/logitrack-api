@@ -54,7 +54,7 @@ To survive production-level workloads and distributed environments, the applicat
 
 The repository features comprehensive unit coverage alongside native HTTP client configurations for rapid execution.
 
-## Running Test Suites
+## 🔬 Running Test Suites
 
 Execute unit and integration test suites via the Maven Wrapper:
 
@@ -62,12 +62,12 @@ Execute unit and integration test suites via the Maven Wrapper:
 ./mvnw clean test
 ```
 
-# 🔬 Stress & Integration Test Suite
+## 🔬 Stress & Integration Test Suite
 * **ProductConcurrencyIT:** Advanced multi-threaded integration test executing parallel threads via `ExecutorService` and synchronized using a `CountDownLatch`. The suite empirically proves that the system rejects overlapping writes, throwing expected locking failures and preserving data integrity under high load.
 
 * **ShippingOrderServiceTest** & **ShippingOrderTest**: Direct domain unit testing validating vehicle overload rejections, item addition math, and domain aggregate consistency without database overhead.
 
-## IDE HTTP Client Testing
+## 🔬 IDE HTTP Client Testing
 Access testing scripts for direct execution inside IntelliJ IDEA:
 ```Bash
 src/main/java/com/logitrack/api/products-test.http
@@ -78,7 +78,7 @@ src/main/java/com/logitrack/api/shipping-orders-test.http
 ```Bash
 src/main/java/com/logitrack/api/vehicles-test.http
 ```
-
+---
 
 # 🔧 Installation & Deployment
 ## Prerequisites:
@@ -102,6 +102,7 @@ cd logitrack-api
 ```Bash
 ./mvnw spring-boot:run
 ```
+---
 
 # 🗺️ Technical Roadmap
 * [x] Data Persistence Integration via Spring Data JPA.
