@@ -27,57 +27,26 @@ public class ShippingOrderService {
 
     @Transactional
     public ShippingOrder createShippingOrder(ShippingOrderRequest request) {
-        // 1. Buscar o veículo associado
         Vehicle vehicle = vehicleRepository.findById(request.vehicleId())
-                .orElseThrow(() -> new BusinessException("Veículo não encontrado com o ID: " + request.vehicleId()));
+                .orElseThrow(() -> new BusinessException("Vehicle not found with ID: " + request.vehicleId()));
 
-        ShippingOrder shippingOrder = new ShippingOrder();
-        shippingOrder.setVehicle(vehicle);
+        ShippingOrder shippingOrder = new ShippingOrder(vehicle);
 
-        double accumulatedWeight = 0.0;
-        double accumulatedVolume = 0.0;
-
-        // 2. Processar itens, validar estoque e somar pesos/cubagens parciais
         for (ShippingOrderItemRequest itemDto : request.items()) {
             Product product = productRepository.findById(itemDto.productId())
-                    .orElseThrow(() -> new BusinessException("Produto não encontrado com o ID: " + itemDto.productId()));
+                    .orElseThrow(() -> new BusinessException("Product not found with ID: " + itemDto.productId()));
 
-            // Executa a regra de negócio rica dentro da entidade Product (Baixa e validação de estoque)
+            // 1. Baixa o estoque do produto
             product.decreaseStock(itemDto.quantity());
-
-            // 🔥 Persiste o produto atualizado para que o Spring Data dispare os eventos de domínio acumulados
             productRepository.save(product);
 
-            double itemWeight = product.getWeight() * itemDto.quantity();
-            double itemVolume = product.getCubicVolume() * itemDto.quantity();
-
-            accumulatedWeight += itemWeight;
-            accumulatedVolume += itemVolume;
-
+            // 2. Cria o item e adiciona na ordem (A própria ordem recalcula totais e valida a capacidade do veículo)
             ShippingOrderItem orderItem = new ShippingOrderItem(product, itemDto.quantity(), itemDto.customerName());
             shippingOrder.addItem(orderItem);
         }
 
-        // 3. Validar Limite de Peso do Veículo
-        if (accumulatedWeight > vehicle.getMaxCapacityKg()) {
-            throw new BusinessException(String.format(
-                    "Capacidade de peso excedida! Carga atual: %.2f kg | Limite do veículo (%s): %.2f kg",
-                    accumulatedWeight, vehicle.getModel(), vehicle.getMaxCapacityKg()
-            ));
-        }
-
-        // 4. Validar Limite de Cubagem do Veículo
-        if (accumulatedVolume > vehicle.getMaxCubicVolume()) {
-            throw new BusinessException(String.format(
-                    "Capacidade volumétrica (cubagem) excedida! Volume da carga: %.3f m³ | Limite do veículo (%s): %.3f m³",
-                    accumulatedVolume, vehicle.getModel(), vehicle.getMaxCubicVolume()
-            ));
-        }
-
-        // 5. Consolidar dados e aprovar a ordem
-        shippingOrder.setTotalWeight(accumulatedWeight);
-        shippingOrder.setTotalCubicVolume(accumulatedVolume);
-        shippingOrder.setStatus(ShippingOrderStatus.APPROVED);
+        // 3. Transiciona o status usando o modelo de domínio rico
+        shippingOrder.approve();
 
         return shippingOrderRepository.save(shippingOrder);
     }
