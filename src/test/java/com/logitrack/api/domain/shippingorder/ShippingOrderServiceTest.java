@@ -38,7 +38,7 @@ class ShippingOrderServiceTest {
     private ShippingOrderService shippingOrderService;
 
     @Test
-    @DisplayName("Should orchestrate shipping order creation successfully")
+    @DisplayName("Should orchestrate shipping order creation successfully with PENDING status")
     void createShippingOrder_Success() {
         Vehicle vehicle = new Vehicle("Caminhão", "XYZ-9999", 5000.0, 50.0);
         // ORDEM DOS PARÂMETROS: nome, peso, volume, estoqueInicial
@@ -54,7 +54,10 @@ class ShippingOrderServiceTest {
         ShippingOrder result = shippingOrderService.createShippingOrder(orderRequest);
 
         assertThat(result).isNotNull();
-        assertThat(result.getStatus()).isEqualTo(ShippingOrderStatus.APPROVED);
+        // ALINHAMENTO COM A MÁQUINA DE ESTADOS DO TMS: Estado inicial deve ser PENDING
+        assertThat(result.getStatus()).isEqualTo(ShippingOrderStatus.PENDING);
+        assertThat(result.getItems()).hasSize(1);
+        assertThat(result.getTotalWeight()).isEqualTo(160.0); // 80kg * 2 unidades
 
         verify(productRepository, times(1)).save(product);
         verify(shippingOrderRepository, times(1)).save(any(ShippingOrder.class));
@@ -73,5 +76,26 @@ class ShippingOrderServiceTest {
 
         verifyNoInteractions(productRepository);
         verifyNoInteractions(shippingOrderRepository);
+    }
+
+    @Test
+    @DisplayName("Should throw BusinessException when payload exceeds vehicle capacity")
+    void createShippingOrder_ExceedsVehicleCapacity() {
+        // Veículo pequeno com capacidade máxima de 100 kg
+        Vehicle smallVehicle = new Vehicle("Furgão", "ABC-1234", 100.0, 5.0);
+        // Produto pesado
+        Product heavyProduct = new Product("Maquinário", 200.0, 1.0, 10);
+
+        when(vehicleRepository.findById(1L)).thenReturn(Optional.of(smallVehicle));
+        when(productRepository.findById(10L)).thenReturn(Optional.of(heavyProduct));
+
+        ShippingOrderItemRequest itemRequest = new ShippingOrderItemRequest(10L, 1, "Fábrica");
+        ShippingOrderRequest orderRequest = new ShippingOrderRequest(1L, List.of(itemRequest));
+
+        assertThatThrownBy(() -> shippingOrderService.createShippingOrder(orderRequest))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Weight capacity exceeded");
+
+        verify(shippingOrderRepository, never()).save(any());
     }
 }

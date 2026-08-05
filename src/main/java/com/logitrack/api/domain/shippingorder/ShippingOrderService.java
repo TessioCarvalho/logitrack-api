@@ -36,17 +36,17 @@ public class ShippingOrderService {
             Product product = productRepository.findById(itemDto.productId())
                     .orElseThrow(() -> new BusinessException("Product not found with ID: " + itemDto.productId()));
 
-            // 1. Baixa o estoque do produto
+            // 1. Baixa o estoque do produto (Regra de negócio com disparo de evento se necessário)
             product.decreaseStock(itemDto.quantity());
             productRepository.save(product);
 
-            // 2. Cria o item e adiciona na ordem (A própria ordem recalcula totais e valida a capacidade do veículo)
+            // 2. Cria o item e adiciona na ordem (A própria ordem recalcula totais e valida capacidade)
             ShippingOrderItem orderItem = new ShippingOrderItem(product, itemDto.quantity(), itemDto.customerName());
             shippingOrder.addItem(orderItem);
         }
 
-        // 3. Transiciona o status usando o modelo de domínio rico
-        shippingOrder.approve();
+        // 3. Transiciona o status usando o modelo de domínio rico (PENDING -> ROUTED)
+        shippingOrder.transitionStatus(ShippingOrderStatus.ROUTED);
 
         return shippingOrderRepository.save(shippingOrder);
     }

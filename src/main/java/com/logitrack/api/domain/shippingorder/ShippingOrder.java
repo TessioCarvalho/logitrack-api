@@ -1,5 +1,6 @@
 package com.logitrack.api.domain.shippingorder;
 
+import com.logitrack.api.domain.route.DeliveryRoute;
 import com.logitrack.api.domain.vehicle.Vehicle;
 import com.logitrack.api.exception.BusinessException;
 import jakarta.persistence.*;
@@ -25,6 +26,7 @@ public class ShippingOrder {
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Status is required")
+    @Column(nullable = false)
     private ShippingOrderStatus status = ShippingOrderStatus.PENDING;
 
     @Column(name = "total_weight")
@@ -39,13 +41,21 @@ public class ShippingOrder {
     @OneToMany(mappedBy = "shippingOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShippingOrderItem> items = new ArrayList<>();
 
+    // --- RELACIONAMENTO COM A ROTA DE ENTREGA (TMS) ---
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_route_id")
+    private DeliveryRoute deliveryRoute;
+
+    @Column(name = "delivery_sequence")
+    private Integer deliverySequence;
+
     protected ShippingOrder() {}
 
     public ShippingOrder(Vehicle vehicle) {
         this.vehicle = Objects.requireNonNull(vehicle, "Vehicle cannot be null");
     }
 
-    // --- REGRAS DE NEGÓCIO DE DOMÍNIO ---
+    // --- REGRAS DE DOMÍNIO E OPERAÇÕES ---
 
     public void addItem(ShippingOrderItem item) {
         if (this.status != ShippingOrderStatus.PENDING) {
@@ -60,7 +70,13 @@ public class ShippingOrder {
         validateVehicleCapacity();
     }
 
-    private void recalculateLoad() {
+    public void recalculateLoad() {
+        if (this.items == null || this.items.isEmpty()) {
+            this.totalWeight = 0.0;
+            this.totalCubicVolume = 0.0;
+            return;
+        }
+
         this.totalWeight = this.items.stream()
                 .mapToDouble(ShippingOrderItem::calculateTotalWeight)
                 .sum();
@@ -85,31 +101,25 @@ public class ShippingOrder {
         }
     }
 
-    public void confirm() {
-        if (this.status != ShippingOrderStatus.PENDING) {
-            throw new BusinessException("Only PENDING orders can be confirmed.");
+    /**
+     * Valida e executa transições estritas do ciclo de vida da ordem no TMS.
+     */
+    public void transitionStatus(ShippingOrderStatus newStatus) {
+        Objects.requireNonNull(newStatus, "New status cannot be null");
+        if (!this.status.canTransitionTo(newStatus)) {
+            throw new BusinessException(
+                    String.format("Cannot transition shipping order %s from %s to %s",
+                            id != null ? id.toString() : "[New]", status, newStatus)
+            );
         }
-        if (this.items.isEmpty()) {
-            throw new BusinessException("Cannot confirm an order without items.");
-        }
-        this.status = ShippingOrderStatus.APPROVED;
+        this.status = newStatus;
     }
 
     public void cancel() {
-        if (this.status == ShippingOrderStatus.DELIVERED) {
-            throw new BusinessException("Cannot cancel an order that has already been delivered.");
-        }
-        this.status = ShippingOrderStatus.CANCELLED;
+        transitionStatus(ShippingOrderStatus.CANCELLED);
     }
 
-    public void approve() {
-        if (this.status == ShippingOrderStatus.CANCELLED) {
-            throw new BusinessException("Cannot approve a cancelled order.");
-        }
-        this.status = ShippingOrderStatus.APPROVED;
-    }
-
-    // --- GETTERS E SETTERS SEGUROS ---
+    // --- GETTERS, SETTERS E ALIASES DE DOMÍNIO ---
 
     public Long getId() {
         return id;
@@ -129,11 +139,20 @@ public class ShippingOrder {
     }
 
     public Double getTotalWeight() {
-        return totalWeight;
+        return totalWeight != null ? totalWeight : 0.0;
     }
 
     public Double getTotalCubicVolume() {
-        return totalCubicVolume;
+        return totalCubicVolume != null ? totalCubicVolume : 0.0;
+    }
+
+    // Aliases semânticos exigidos pela DeliveryRoute
+    public Double getTotalWeightKg() {
+        return getTotalWeight();
+    }
+
+    public Double getTotalVolumeM3() {
+        return getTotalCubicVolume();
     }
 
     public LocalDateTime getCreatedAt() {
@@ -142,5 +161,21 @@ public class ShippingOrder {
 
     public List<ShippingOrderItem> getItems() {
         return Collections.unmodifiableList(items);
+    }
+
+    public DeliveryRoute getDeliveryRoute() {
+        return deliveryRoute;
+    }
+
+    public void setDeliveryRoute(DeliveryRoute deliveryRoute) {
+        this.deliveryRoute = deliveryRoute;
+    }
+
+    public Integer getDeliverySequence() {
+        return deliverySequence;
+    }
+
+    public void setDeliverySequence(Integer deliverySequence) {
+        this.deliverySequence = deliverySequence;
     }
 }
