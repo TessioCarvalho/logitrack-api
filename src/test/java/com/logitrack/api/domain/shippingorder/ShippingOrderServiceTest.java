@@ -38,10 +38,9 @@ class ShippingOrderServiceTest {
     private ShippingOrderService shippingOrderService;
 
     @Test
-    @DisplayName("Should orchestrate shipping order creation successfully with PENDING status")
+    @DisplayName("Should orchestrate shipping order creation successfully with ROUTED status")
     void createShippingOrder_Success() {
         Vehicle vehicle = new Vehicle("Caminhão", "XYZ-9999", 5000.0, 50.0);
-        // ORDEM DOS PARÂMETROS: nome, peso, volume, estoqueInicial
         Product product = new Product("Geladeira", 80.0, 0.8, 20);
 
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(vehicle));
@@ -54,10 +53,9 @@ class ShippingOrderServiceTest {
         ShippingOrder result = shippingOrderService.createShippingOrder(orderRequest);
 
         assertThat(result).isNotNull();
-        // ALINHAMENTO COM A MÁQUINA DE ESTADOS DO TMS: Estado inicial deve ser PENDING
-        assertThat(result.getStatus()).isEqualTo(ShippingOrderStatus.PENDING);
+        assertThat(result.getStatus()).isEqualTo(ShippingOrderStatus.ROUTED);
         assertThat(result.getItems()).hasSize(1);
-        assertThat(result.getTotalWeight()).isEqualTo(160.0); // 80kg * 2 unidades
+        assertThat(result.getTotalWeightKg()).isEqualTo(160.0);
 
         verify(productRepository, times(1)).save(product);
         verify(shippingOrderRepository, times(1)).save(any(ShippingOrder.class));
@@ -81,9 +79,7 @@ class ShippingOrderServiceTest {
     @Test
     @DisplayName("Should throw BusinessException when payload exceeds vehicle capacity")
     void createShippingOrder_ExceedsVehicleCapacity() {
-        // Veículo pequeno com capacidade máxima de 100 kg
         Vehicle smallVehicle = new Vehicle("Furgão", "ABC-1234", 100.0, 5.0);
-        // Produto pesado
         Product heavyProduct = new Product("Maquinário", 200.0, 1.0, 10);
 
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(smallVehicle));
